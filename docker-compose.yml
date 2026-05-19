@@ -1,0 +1,70 @@
+services:
+  inventory:
+    build:
+      context: .
+      dockerfile: services/inventory/Dockerfile
+    env_file: services/inventory/.env
+    environment:
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test:
+        ["CMD", "wget", "--quiet", "--spider", "http://localhost:3001/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  orders:
+    build:
+      context: .
+      dockerfile: services/orders/Dockerfile
+    env_file: services/orders/.env
+    environment:
+      PORT: 3002
+      INVENTORY_URL: http://inventory:3001
+    ports:
+      - "3002:3002"
+    healthcheck:
+      test:
+        ["CMD", "wget", "--quiet", "--spider", "http://localhost:3002/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      inventory:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    env_file: services/gateway/.env
+    environment:
+      PORT: 3000
+      ORDERS_URL: http://orders:3002
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      orders:
+        condition: service_healthy
+
+  loadgen:
+    build:
+      context: .
+      dockerfile: services/loadgen/Dockerfile
+    env_file: services/loadgen/.env
+    environment:
+      GATEWAY_URL: http://gateway:3000
+    depends_on:
+      gateway:
+        condition: service_healthy

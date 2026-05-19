@@ -25,6 +25,9 @@ const store = new InMemoryInventoryStore();
 seed(store);
 
 const app = express();
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 app.use(express.json());
 app.use(faultInjection());
 app.use(buildRoutes(store));

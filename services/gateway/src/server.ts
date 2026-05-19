@@ -31,6 +31,9 @@ const ordersTimeoutMs = readEnvInt("ORDERS_TIMEOUT_MS", 5000);
 const orders = new HttpOrdersClient(ordersUrl, ordersTimeoutMs);
 
 const app = express();
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 app.use(express.json());
 app.use(headerToBaggage());
 app.use(faultInjection());

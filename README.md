@@ -4,7 +4,7 @@ A small, deliberately observable application built as the **demo target** for ou
 
 ## What this is and why it exists
 
-The investigation agent needs something to investigate. This repo is that "something"; three TypeScript microservices that emit OpenTelemetry traces to Honeycomb, with realistic failure modes built in (and more coming via a configurable fault-injection layer). When we demo the agent, we can point it at this app's incidents.
+The investigation agent needs something to investigate. This repo is that "something": three TypeScript microservices that emit OpenTelemetry traces to Honeycomb, with realistic failure modes built in. When we demo the agent, we can point it at this app's incidents.
 
 ## Why this app provides a useful demo target
 
@@ -16,7 +16,7 @@ The investigation agent needs something to investigate. This repo is that "somet
 
 4. **Already-existing failure modes.** Real HTTP error paths exist today — `404 unknown_sku`, `409 insufficient`, `400 invalid_quantity`, `502 upstream_unavailable`. The agent has things to find without us writing fake bugs.
 
-5. **Reproducible incidents on the way.** Planned fault-injection middleware will let us produce specific failure scenarios on demand for the demo. Honest services in the production code; controlled chaos at the boundary.
+5. **Reproducible incidents on demand.** The opt-in fault-injection layer ([docs/fault-injection.md](docs/fault-injection.md)) lets us produce specific failure scenarios for the agent to investigate. Honest services in the production code; controlled chaos at the boundary.
 
 6. **Industry-standard observability stack.** OTel + Honeycomb is what the agent will see in real customer environments.
 
@@ -62,7 +62,7 @@ the agent can walk top-down.
 | Wide span attributes (sub-phase D) | shipped  |
 | Fault injection layer              | shipped  |
 | Load generator                     | shipped  |
-| Dockerization                      | deferred |
+| Dockerization                      | shipped  |
 | Terraform / deployment             | deferred |
 
 ## Services
@@ -83,6 +83,7 @@ You need a Honeycomb Ingest API key, scoped to the environment you send traces t
 services/gateway/.env
 services/orders/.env
 services/inventory/.env
+services/loadgen/.env
 ```
 
 Quickest setup: each service ships a `.env.example` you can copy:
@@ -97,9 +98,35 @@ Quickest setup: each service ships a `.env.example` you can copy:
 Then fill in `HONEYCOMB_API_KEY` in each. The other variables have working  
 localhost defaults. Set `FAULT_INJECTION_ENABLED=true` (commented in the example) to enable the opt-in fault layer
 
-`.env` is gitignored. The key is the same across all three services (Honeycomb routes per `service.name` into separate datasets).
+`.env` is gitignored. The key is the same across all four services (Honeycomb routes per `service.name` into separate datasets).
 
 ## Running it locally
+
+You can run the full chain in two ways: with Docker Compose (one command, deterministic boot) or in host mode with per-service `npm run dev`.
+
+### With Docker Compose (recommended)
+
+```bash
+docker compose up
+```
+
+Brings up `inventory`, `orders`, `gateway`, and `loadgen` together. Compose waits for each service's `/healthz` to pass before starting the next, so the boot order is deterministic and nothing sends traffic to a not-yet-ready upstream. Loadgen starts automatically once gateway is healthy.
+
+Smoke test:
+
+```bash
+curl -s -X POST http://localhost:3000/api/orders \
+  -H 'Content-Type: application/json' \
+  -d '{"sku":"SKU-A100","quantity":1}' | jq
+```
+
+To stop the stack:
+
+```bash
+docker compose down
+```
+
+### Host mode
 
 Three terminals (one per service):
 
@@ -128,7 +155,9 @@ A single curl produces spans across all three terminals sharing one `traceId`.
 
 ## Generating traffic
 
-Loadgen is an auxiliary service (not part of the three-service demo target) that drives continuous, _mostly successful_ traffic through the gateway service. It's a separate `npm` script so you can turn traffic on deliberately. `npm run dev` does **not** start it.
+Loadgen is an auxiliary service (not part of the three-service demo target) that drives continuous, _mostly successful_ traffic through the gateway service. With `docker compose up`, loadgen starts automatically once gateway is healthy.
+
+In **host mode**, it's a separate `npm` script so you can turn traffic on deliberately. `npm run dev` does **not** start it.
 
 ```bash
 # in a fourth terminal, after the services are up:
@@ -152,7 +181,3 @@ Loadgen emits its own OTel spans (`service.name=loadgen`) as the root of each tr
 ## Triggering faults for demo scenarios
 
 The agent we're building investigates incidents. To rehearse against it, we need incidents on demand. The opt-in fault-injection layer is how we get that. See **[docs/fault-injection.md](docs/fault-injection.md)**
-
-## What's coming
-
-- **Dockerization:** `docker compose up` to run the full chain in one command.
