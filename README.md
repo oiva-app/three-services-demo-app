@@ -98,7 +98,7 @@ Quickest setup: each service ships a `.env.example` you can copy:
 Then fill in `HONEYCOMB_API_KEY` in each. The other variables have working  
 localhost defaults. Set `FAULT_INJECTION_ENABLED=true` (commented in the example) to enable the opt-in fault layer
 
-`.env` is gitignored. The key is the same across all four services (Honeycomb routes per `service.name` into separate datasets).
+`.env` is gitignored. All four services - gateway, orders, inventory, and loadgen - use the same key (Honeycomb routes per `service.name` into separate datasets).
 
 ## Running it locally
 
