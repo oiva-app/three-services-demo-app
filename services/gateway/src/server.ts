@@ -6,6 +6,7 @@ import { HttpOrdersClient } from "./infra/httpOrdersClient";
 import { buildRoutes } from "./http/routes";
 import { headerToBaggage } from "./http/middleware/headerToBaggage";
 import { faultInjection } from "./http/middleware/faultInjection";
+import { errorHandler } from "./http/middleware/errorHandler";
 
 function readEnvInt(name: string, defaultValue: number): number {
   const raw = process.env[name];
@@ -38,6 +39,7 @@ app.use(express.json());
 app.use(headerToBaggage());
 app.use(faultInjection());
 app.use(buildRoutes(orders));
+app.use(errorHandler());
 
 const server = app.listen(port, () => {
   console.log(`gateway listening on: ${port}`);
