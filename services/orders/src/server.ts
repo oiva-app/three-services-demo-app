@@ -30,6 +30,9 @@ const inventoryTimeoutMs = readEnvInt("INVENTORY_TIMEOUT_MS", 5000);
 const inventory = new HttpInventoryClient(inventoryUrl, inventoryTimeoutMs);
 
 const app = express();
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 app.use(express.json());
 app.use(faultInjection());
 app.use(buildRoutes(inventory));
