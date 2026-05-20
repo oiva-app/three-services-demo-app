@@ -5,7 +5,7 @@ import express from "express";
 import { HttpInventoryClient } from "./infra/httpInventoryClient";
 import { buildRoutes } from "./http/routes";
 import { faultInjection } from "./http/middleware/faultInjection";
-import { errorHandler } from "./infra/errorHandler";
+import { errorHandler } from "./http/middleware/errorHandler";
 
 function readEnvInt(name: string, defaultValue: number): number {
   const raw = process.env[name];
