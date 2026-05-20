@@ -5,6 +5,7 @@ import express from "express";
 import { HttpInventoryClient } from "./infra/httpInventoryClient";
 import { buildRoutes } from "./http/routes";
 import { faultInjection } from "./http/middleware/faultInjection";
+import { errorHandler } from "./http/middleware/errorHandler";
 
 function readEnvInt(name: string, defaultValue: number): number {
   const raw = process.env[name];
@@ -36,6 +37,7 @@ app.get("/healthz", (_req, res) => {
 app.use(express.json());
 app.use(faultInjection());
 app.use(buildRoutes(inventory));
+app.use(errorHandler());
 
 const server = app.listen(port, () => {
   console.log(`orders listening on: ${port}`);
