@@ -16,9 +16,7 @@ The investigation agent needs something to investigate. This repo is that "somet
 
 4. **Already-existing failure modes.** Real HTTP error paths exist today — `404 unknown_sku`, `409 insufficient`, `400 invalid_quantity`, `502 upstream_unavailable`. The agent has things to find without us writing fake bugs.
 
-5. **Reproducible incidents on demand.** The opt-in fault-injection layer ([docs/fault-injection.md](docs/fault-injection.md)) lets us produce specific failure scenarios for the agent to investigate. Honest services in the production code; controlled chaos at the boundary.
-
-6. **Industry-standard observability stack.** OTel + Honeycomb is what the agent will see in real customer environments.
+5. **Industry-standard observability stack.** OTel + Honeycomb is what the agent will see in real customer environments.
 
 ## Architecture
 
@@ -60,7 +58,6 @@ the agent can walk top-down.
 | OTel SDK in each service           | shipped  |
 | OTel → Honeycomb (sub-phase C)     | shipped  |
 | Wide span attributes (sub-phase D) | shipped  |
-| Fault injection layer              | shipped  |
 | Load generator                     | shipped  |
 | Dockerization                      | shipped  |
 | Terraform / deployment             | deferred |
@@ -95,8 +92,7 @@ Quickest setup: each service ships a `.env.example` you can copy:
  cp services/loadgen/.env.example services/loadgen/.env
 ```
 
-Then fill in `HONEYCOMB_API_KEY` in each. The other variables have working  
-localhost defaults. Set `FAULT_INJECTION_ENABLED=true` (commented in the example) to enable the opt-in fault layer
+Then fill in `HONEYCOMB_API_KEY` in each. The other variables have working localhost defaults.
 
 `.env` is gitignored. All four services - gateway, orders, inventory, and loadgen - use the same key (Honeycomb routes per `service.name` into separate datasets).
 
@@ -171,13 +167,10 @@ npm run dev:loadgen
 
 Every tick (default 1 req/sec, configurable via `REQUESTS_PER_SECOND`), loadgen picks one of two actions:
 
-- **~70% POST `/api/orders`** with a SKU + quantity. ~95% of the time the SKU is drawn from inventory's seeded list (`SKU-A100`, `SKU-B200`, `SKU-C300`) so the request actually succeeds; the remaining ~5% sends a random `widget-N` SKU that inventory doesn't know, producing a natural `unknown_sku` error. The mix is deliberate: a clean-enough baseline that injected faults stand out, but not so clean that the data looks fake.
+- **~70% POST `/api/orders`** with a SKU + quantity. ~95% of the time the SKU is drawn from inventory's seeded list (`SKU-A100`, `SKU-B200`, `SKU-C300`) so the request actually succeeds; the remaining ~5% sends a random `widget-N` SKU that inventory doesn't know, producing a natural `unknown_sku` error. The mix is deliberate and provides a clean-enough baseline that anomalies stand out.
+
 - **~30% GET `/api/orders/ord-{N}`** with a random order id. Orders' `GET` is intentionally synthetic; it just echoes the id back, so these requests always succeed.
 
 Loadgen emits its own OTel spans (`service.name=loadgen`) as the root of each trace, so in Honeycomb you'll see complete request traces that begin at loadgen and propagate through `gateway → orders → inventory`.
 
 > **Known coupling.** Loadgen's `KNOWN_SKUS` constant has to match inventory's seed data manually, but there's no enforcement. Deliberate for now; the planned follow-up is either to drive both from one env var or to have loadgen discover SKUs from inventory at startup.
-
-## Triggering faults for demo scenarios
-
-The agent we're building investigates incidents. To rehearse against it, we need incidents on demand. The opt-in fault-injection layer is how we get that. See **[docs/fault-injection.md](docs/fault-injection.md)**

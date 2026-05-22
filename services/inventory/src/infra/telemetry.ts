@@ -6,7 +6,10 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { ExpressLayerType } from "@opentelemetry/instrumentation-express";
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from "@opentelemetry/semantic-conventions";
 import {
   CompositePropagator,
   W3CTraceContextPropagator,
@@ -14,6 +17,7 @@ import {
 } from "@opentelemetry/core";
 
 const serviceName = process.env.OTEL_SERVICE_NAME ?? "inventory";
+const serviceVersion = process.env.SERVICE_VERSION ?? "unknown";
 
 const apiKey = process.env.HONEYCOMB_API_KEY;
 if (!apiKey) {
@@ -32,6 +36,7 @@ const exporter = new OTLPTraceExporter({
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
     [ATTR_SERVICE_NAME]: serviceName,
+    [ATTR_SERVICE_VERSION]: serviceVersion,
   }),
   spanProcessors: [new BatchSpanProcessor(exporter)],
   textMapPropagator: new CompositePropagator({

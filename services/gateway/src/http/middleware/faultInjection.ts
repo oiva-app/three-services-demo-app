@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { propagation, trace } from "@opentelemetry/api";
+import { propagation } from "@opentelemetry/api";
 
 const SERVICE_NAME = "gateway";
 const BAGGAGE_KEY = "fault.inject";
@@ -51,25 +51,11 @@ function readSpec(): { spec: FaultSpec; raw: string } | null {
   return { spec, raw: entry.value };
 }
 
-function annotateSpan(raw: string, spec: FaultSpec): void {
-  const span = trace.getActiveSpan();
-  if (!span) return;
-  span.setAttributes({
-    "fault.injected": true,
-    "fault.spec": raw,
-    "fault.target": SERVICE_NAME,
-    "fault.mode": spec.mode,
-    "fault.value": spec.mode === "latency" ? spec.valueMs : spec.status,
-  });
-}
-
 export function faultInjection() {
   return async (req: Request, res: Response, next: NextFunction) => {
     const found = readSpec();
     if (!found) return next();
     const { spec, raw } = found;
-
-    annotateSpan(raw, spec);
 
     if (spec.mode === "latency") {
       await new Promise((resolve) => setTimeout(resolve, spec.valueMs));
