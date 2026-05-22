@@ -15,6 +15,8 @@ RUN npm prune --omit=dev
 
 FROM node:22-alpine
 ENV NODE_ENV=production
+ARG SERVICE_VERSION=unknown
+ENV SERVICE_VERSION=$SERVICE_VERSION
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json

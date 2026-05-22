@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: services/inventory/Dockerfile
+      args:
+        SERVICE_VERSION: ${SERVICE_VERSION:-unknown}
     env_file: services/inventory/.env
     environment:
       PORT: 3001
@@ -20,6 +22,8 @@ services:
     build:
       context: .
       dockerfile: services/orders/Dockerfile
+      args:
+        SERVICE_VERSION: ${SERVICE_VERSION:-unknown}
     env_file: services/orders/.env
     environment:
       PORT: 3002
@@ -41,6 +45,8 @@ services:
     build:
       context: .
       dockerfile: services/gateway/Dockerfile
+      args:
+        SERVICE_VERSION: ${SERVICE_VERSION:-unknown}
     env_file: services/gateway/.env
     environment:
       PORT: 3000
@@ -62,6 +68,8 @@ services:
     build:
       context: .
       dockerfile: services/loadgen/Dockerfile
+      args:
+        SERVICE_VERSION: ${SERVICE_VERSION:-unknown}
     env_file: services/loadgen/.env
     environment:
       GATEWAY_URL: http://gateway:3000
