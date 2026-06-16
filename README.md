@@ -12,7 +12,7 @@ The investigation agent needs something to investigate. This repo is that "somet
 
 2. **Multi-hop call graph.** A request flows `client → gateway → orders → inventory`. Single-hop traces only answer "did this endpoint fail?" Multi-hop traces let the agent ask the more interesting question: _"where in the chain did it fail, and why?"_ That's the question worth investigating.
 
-3. **Built for OpenTelemetry from day one.** Hexagonal architecture (domain at center, adapters at edges) puts infrastructure boundaries exactly where OTel hooks naturally.
+3. **Built for OpenTelemetry.** Hexagonal architecture (domain at center, adapters at edges) puts infrastructure boundaries exactly where OTel hooks naturally.
 
 4. **Already-existing failure modes.** Real HTTP error paths exist today — `404 unknown_sku`, `409 insufficient`, `400 invalid_quantity`, `502 upstream_unavailable`. The agent has things to find without us writing fake bugs.
 
