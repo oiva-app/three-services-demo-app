@@ -36,11 +36,10 @@ export function buildRoutes(store: InventoryStore): Router {
       span?.setAttributes({
         "reservation.ok": false,
         "reservation.reason": result.reason,
-        ...(stock && {
-          "inventory.warehouse": stock.warehouse,
-          "inventory.stock.available": stock.quantity,
-        }),
+        "inventory.warehouse": stock!.warehouse,
+        "inventory.stock.available": stock!.quantity,
       });
+
       const status =
         result.reason === "unknown_sku"
           ? 404
